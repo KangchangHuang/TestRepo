@@ -5,4 +5,5 @@ test
 
 int main()
 {
+	printf("Conflict A");
 }
