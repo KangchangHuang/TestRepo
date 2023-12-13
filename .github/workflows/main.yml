@@ -1,0 +1,47 @@
+name: Cosign Sign Container Image
+on: [workflow_dispatch,push]
+jobs:
+  Cosign-Sign-Container-Image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install ca-certificates
+        run: sudo apt-get update && sudo apt-get install ca-certificates -y
+      - name: Add self signed sigstore cert
+        run: sudo cp nginx-selfsigned.crt /usr/local/share/ca-certificates/nginx-selfsigned.crt && sudo update-ca-certificates
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.0.2
+        with:
+         cosign-release: 'v2.0.1'
+      - name: Check install!
+        run: cosign version
+      - name: Check docker install!
+        run: command -v docker
+      - name: Check aws install!
+        run: command -v aws
+      - name: Cosign login
+        env: 
+          AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ecr_account: ${{ vars.ECR_ACCOUNT }}
+        run: | 
+          ecr_password=`docker run -i --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} --network host amazon/aws-cli ecr get-login-password`
+          cosign login -u $ecr_account -p $ecr_password 987780704976.dkr.ecr.us-west-2.amazonaws.com
+      - name: Show Input Image URL
+        run: |
+          IMAGE_URL=`cat imageurl`
+          echo $IMAGE_URL
+          echo https://github.com/${{ github.workflow_ref }}
+      - name: Sign ECR Image
+        run: |
+          IMAGE_URL=`cat imageurl`
+          cosign sign $IMAGE_URL -y
+      - name: Verify ECR Image
+        run: | 
+          IMAGE_URL=`cat imageurl`
+          cosign verify --certificate-identity https://github.com/${{ github.workflow_ref }} --certificate-oidc-issuer https://token.actions.githubusercontent.com $IMAGE_URL
