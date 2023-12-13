@@ -11,8 +11,6 @@ jobs:
         uses: actions/checkout@v3
       - name: Install ca-certificates
         run: sudo apt-get update && sudo apt-get install ca-certificates -y
-      - name: Add self signed sigstore cert
-        run: sudo cp nginx-selfsigned.crt /usr/local/share/ca-certificates/nginx-selfsigned.crt && sudo update-ca-certificates
       - name: Install cosign
         uses: sigstore/cosign-installer@v3.0.2
         with:
