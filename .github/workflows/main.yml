@@ -29,15 +29,11 @@ jobs:
           ecr_account: ${{ vars.ECR_ACCOUNT }}
         run: | 
           ecr_password=`docker run -i --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} --network host amazon/aws-cli ecr get-login-password`
-          cosign login -u $ecr_account -p $ecr_password 987780704976.dkr.ecr.us-west-2.amazonaws.com
-      - name: Show Input Image URL
-        run: |
-          IMAGE_URL=`cat imageurl`
-          echo $IMAGE_URL
-          echo https://github.com/${{ github.workflow_ref }}
+          cosign login -u $ecr_account -p $ecr_password $ecr_account.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - name: Sign ECR Image
         run: |
           IMAGE_URL=`cat imageurl`
+          echo $IMAGE_URL
           cosign sign $IMAGE_URL -y
       - name: Verify ECR Image
         run: | 
