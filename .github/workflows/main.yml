@@ -23,13 +23,14 @@ jobs:
         run: command -v aws
       - name: Cosign login
         env: 
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
           AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
           AWS_ACCESS_KEY_ID: ${{ vars.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           ecr_account: ${{ vars.ECR_ACCOUNT }}
         run: | 
           ecr_password=`docker run -i --rm -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} --network host amazon/aws-cli ecr get-login-password`
-          cosign login -u $ecr_account -p $ecr_password $ecr_account.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+          cosign login -u $ecr_account -p $ecr_password $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - name: Sign ECR Image
         run: |
           IMAGE_URL=`cat imageurl`
